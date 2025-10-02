@@ -75,6 +75,3 @@ if __name__ == "__main__":
 
     args: argparse.Namespace = parser.parse_args()
     main(data_path=args.data, model_path=args.out)
-
-# To run the script, use:
-# python src/train.py --data data/sentiments.csv --out models/sentiment.joblib

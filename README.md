@@ -14,5 +14,3 @@ pip install -r requirements.txt
 
 ## Train
 python src/train.py --data data/train.csv --out models/sentiment.joblib
-
-A new function was added.
