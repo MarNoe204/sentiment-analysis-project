@@ -35,4 +35,4 @@ jobs:
 
       - name: Run the training script
         run: |
-          python src/train.py --data data/train.csv --out models/sentiment.joblib
+          python src/train.py --data data/sentiments.csv --out models/sentiment.joblib
