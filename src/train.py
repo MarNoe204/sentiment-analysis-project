@@ -36,16 +36,18 @@ def split_data(
 
 def train_model(X_train: pd.Series, y_train: pd.Series) -> Pipeline:
     """
-    Builds and trains a classification pipeline.
+    Builds and trains a classification pipeline with optimized parameters.
     """
+    # Optimized Pipeline for better performance
     clf_pipeline = make_pipeline(
-        TfidfVectorizer(min_df=1, ngram_range=(1, 2)),
-        LogisticRegression(max_iter=1000),
+        # Increased ngram_range to capture more context and set max_features
+        TfidfVectorizer(min_df=1, ngram_range=(1, 3), max_features=100000), 
+        # Increased C (inverse of regularization strength) to reduce overfitting
+        LogisticRegression(max_iter=1000, C=100, class_weight='balanced'), 
     )
     clf_pipeline.fit(X_train, y_train)
     return clf_pipeline
 
-# New function
 def save_model(model: Pipeline, model_path: str) -> None:
     """
     Saves the trained model to a file.
