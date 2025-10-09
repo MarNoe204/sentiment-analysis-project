@@ -16,6 +16,21 @@ on:
       - ".github/workflows/**"
 
 jobs:
+  lint-and-format:
+    name: Lint and Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies (including Ruff)
+        run: pip install -r requirements.txt
+      - name: Run Ruff Check (Linting)
+        run: ruff check .
+      - name: Run Ruff Format Check (Formatting)
+        run: ruff format . --check
   run-formatter:
     runs-on: ubuntu-latest
     timeout-minutes: 10
