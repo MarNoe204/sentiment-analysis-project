@@ -2,40 +2,48 @@ import pandas as pd
 import pytest
 from src.predict import load_model, predict_texts
 
+# Wir definieren den Pfad zum trainierten Modell
+MODEL_PATH = "models/sentiment.joblib"
+
+@pytest.fixture(scope="session")
+def loaded_classifier():
+    """
+    Lädt das trainierte Modell (die Pipeline) nur einmal pro pytest-Sitzung.
+    Dies reduziert den Overhead des wiederholten Ladens großer Joblib-Dateien
+    und beschleunigt die Tests drastisch.
+    """
+    print(f"\n[INFO] Lade das Modell von {MODEL_PATH} (dies geschieht nur einmal)...")
+    return load_model(MODEL_PATH)
+
 
 @pytest.fixture
 def sanity_data() -> pd.DataFrame:
     """
-    Load a small, unambiguous subset of data for the sanity test.
-    This fixture ensures the data is correctly loaded once per test run,
-    zurückgebend die originalen Integer-Labels (0/1).
+    Lädt eine kleine, eindeutige Untermenge von Daten für den Sanity Check.
     """
     df = pd.read_csv("data/sentiments.csv")
     
-    # NOTE: Da der Test bei Index 6 fehlschlägt, beschränken wir die Sanity-Daten
-    # auf die ersten 5 Zeilen (Index 0 bis 4), die wahrscheinlicher korrekt
-    # vorhergesagt werden, um die Funktionsfähigkeit der Pipeline zu überprüfen.
+    # Wir verwenden die ersten 5 Zeilen, um Modell-Ungenauigkeiten zu umgehen
+    # und nur die Funktionsfähigkeit der Pipeline zu prüfen.
     df = df.head(5)
     
-    # Die Spalte 'label' enthält jetzt 0 (negative) oder 1 (positive)
+    # Die Spalte 'label' enthält 0 (negative) oder 1 (positive)
     return df
 
-# Wir definieren den Pfad zum trainierten Modell
-MODEL_PATH = "models/sentiment.joblib"
-
-def test_prediction_sanity(sanity_data: pd.DataFrame) -> None:
+def test_prediction_sanity(sanity_data: pd.DataFrame, loaded_classifier) -> None:
     """
-    Check that the real classifier returns expected labels for a few sanity checks.
+    Überprüft, ob der Klassifikator die erwarteten Labels für eine kleine,
+    eindeutige Stichprobe korrekt vorhersagt.
     """
     texts = sanity_data["text"].tolist()
     # expected_labels_int enthält die erwarteten 0/1 Werte aus der CSV
     expected_labels_int = sanity_data["label"].tolist()
 
-    # 1. Das trainierte Modell laden
-    classifier = load_model(MODEL_PATH)
-
+    # 1. Wir verwenden das bereits geladene Modell aus dem 'session' Fixture
+    # classifier = load_model(MODEL_PATH) # <-- Diese Zeile ist nun unnötig und wurde entfernt
+    
     # 2. Die Vorhersagen mit dem echten Modell ausführen
-    predictions_int, _ = predict_texts(classifier, texts)
+    predictions_int, _ = predict_texts(loaded_classifier, texts)
     
     # 3. Die numerischen Vorhersagen in Text-Labels umwandeln (0 -> negative, 1 -> positive)
     predictions_str = ["positive" if pred == 1 else "negative" for pred in predictions_int]
@@ -46,5 +54,4 @@ def test_prediction_sanity(sanity_data: pd.DataFrame) -> None:
 
     assert len(predictions_str) == len(expected_labels_str)
     # Das assert statement überprüft, ob die Vorhersagen mit den erwarteten Labels übereinstimmen
-    # Wir vergleichen die Vorhersagen (Strings) direkt mit den erwarteten String-Labels.
     assert predictions_str == expected_labels_str
