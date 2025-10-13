@@ -7,3 +7,8 @@ select = ["E", "F", "I", "T20"] # it depends which to use in the end. Also very 
 [tool.ruff.format]
 quote-style = "double"
 docstring-code-format = true
+
+[tool.mypy]
+namespace_packages = true
+ignore_missing_imports = true
+check_untyped_defs = true
