@@ -19,7 +19,7 @@ def load_and_validate_data(data_path: str) -> DataFrame:
     if not {"text", "label"}.issubset(df.columns):
         raise ValueError("CSV muss die Spalten 'text' und 'label' enthalten.")
 
-    # Explizite Label-Konvertierung: 'positive' -> 1, 'negative' -> 0 
+    # Explizite Label-Konvertierung: 'positive' -> 1, 'negative' -> 0
     # (Wichtig für Stabilität)
     label_map = {"positive": 1, "negative": 0}
     df["label"] = df["label"].replace(label_map)
@@ -30,7 +30,7 @@ def load_and_validate_data(data_path: str) -> DataFrame:
 def train_model(X: Series, y: Series) -> Pipeline:
     """
     Baut und trainiert eine Klassifizierungspipeline mit extremen Parametern
-    (C=100.0, max_iter=5000), um den winzigen Datensatz maximal zu überanpassen 
+    (C=100.0, max_iter=5000), um den winzigen Datensatz maximal zu überanpassen
     (Overfit).
     """
     clf_pipeline = make_pipeline(

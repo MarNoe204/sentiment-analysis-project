@@ -62,7 +62,7 @@ def test_prediction_sanity(setup_test_data):
     results_df = pd.read_csv("temp_out.csv")
     predictions_int = results_df["label"].tolist()
 
-    # 3. Die numerischen Vorhersagen in Text-Labels umwandeln (0 -> negative, 
+    # 3. Die numerischen Vorhersagen in Text-Labels umwandeln (0 -> negative,
     # 1 -> positive)
     predictions_str = [
         "positive" if pred == 1 else "negative" for pred in predictions_int
