@@ -1,6 +1,5 @@
 import pandas as pd
 from pandas import DataFrame, Series
-from sklearn.model_selection import train_test_split
 import argparse
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
