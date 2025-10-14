@@ -16,11 +16,11 @@ def load_and_validate_data(data_path: str) -> DataFrame:
     df = pd.read_csv(data_path)
     if not {"text", "label"}.issubset(df.columns):
         raise ValueError("CSV muss die Spalten 'text' und 'label' enthalten.")
-    
+
     # Explizite Label-Konvertierung: 'positive' -> 1, 'negative' -> 0 (Wichtig für Stabilität)
-    label_map = {'positive': 1, 'negative': 0}
-    df['label'] = df['label'].replace(label_map)
-    
+    label_map = {"positive": 1, "negative": 0}
+    df["label"] = df["label"].replace(label_map)
+
     return df
 
 
@@ -62,11 +62,11 @@ def main(data_path: str, model_path: str) -> None:
     Haupt-Workflow: Lädt, trainiert auf allen Daten, bewertet (intern) und speichert das Modell.
     """
     df = load_and_validate_data(data_path)
-    
+
     # Wir trainieren immer auf dem gesamten Datensatz, um die Konfidenz für den Sanity Check zu maximieren.
     X: Series = df["text"]
     y: Series = df["label"]
-    
+
     print(f"Dataset size ({len(df)}). Training on all data for high confidence test.")
 
     # Trainiere das Modell auf dem gesamten Datensatz (maximales Overfitting)
