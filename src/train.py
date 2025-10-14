@@ -1,11 +1,12 @@
-import pandas as pd
-from pandas import DataFrame, Series
 import argparse
+import os
+
+import pandas as pd
+from joblib import dump
+from pandas import DataFrame, Series
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline, make_pipeline
-import os
-from joblib import dump
 
 
 def load_and_validate_data(data_path: str) -> DataFrame:

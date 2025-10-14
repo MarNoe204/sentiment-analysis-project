@@ -1,10 +1,9 @@
 import pandas as pd
 import pytest
-from src.predict import load_model, predict_texts
+from src.predict import load_model, run_prediction
 
 # Wir definieren den Pfad zum trainierten Modell
 MODEL_PATH = "models/sentiment.joblib"
-
 
 @pytest.fixture(scope="session")
 def loaded_classifier():
@@ -23,30 +22,30 @@ def sanity_data() -> pd.DataFrame:
     Lädt eine kleine, eindeutige Untermenge von Daten für den Sanity Check.
     """
     df = pd.read_csv("data/sentiments.csv")
-
+    
     # Wir verwenden die ersten 5 Zeilen, um Modell-Ungenauigkeiten zu umgehen
     # und nur die Funktionsfähigkeit der Pipeline zu prüfen.
     df = df.head(5)
-
+    
     # Die Spalte 'label' enthält 0 (negative) oder 1 (positive)
     return df
-
 
 def test_prediction_sanity(sanity_data: pd.DataFrame, loaded_classifier) -> None:
     """
     Überprüft, ob der Klassifikator die erwarteten Labels für eine kleine,
     eindeutige Stichprobe korrekt vorhersagt.
     """
-    texts = sanity_data["text"].tolist()
+    texts = sanity_data["text"]
     # expected_labels_int enthält die erwarteten 0/1 Werte aus der CSV
     expected_labels_int = sanity_data["label"].tolist()
 
-    # 1. Wir verwenden das bereits geladene Modell aus dem 'session' Fixture
-    # classifier = load_model(MODEL_PATH) # <-- Diese Zeile ist nun unnötig und wurde entfernt
-
+    # Erstelle einen temporären DataFrame nur mit der Textspalte für run_prediction
+    temp_df = pd.DataFrame({'text': texts})
+    
     # 2. Die Vorhersagen mit dem echten Modell ausführen
-    predictions_int, _ = predict_texts(loaded_classifier, texts)
-
+    results_df = run_prediction(temp_df, loaded_classifier)
+    predictions_int = results_df["label"].tolist()
+    
     # 3. Die numerischen Vorhersagen in Text-Labels umwandeln (0 -> negative, 1 -> positive)
     predictions_str = [
         "positive" if pred == 1 else "negative" for pred in predictions_int
