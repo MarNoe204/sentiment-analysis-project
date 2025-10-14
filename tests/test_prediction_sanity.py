@@ -1,9 +1,9 @@
 import os
+from unittest.mock import patch # <- Wichtig: Jetzt wieder benötigt, um F401 zu vermeiden und CLI zu mocken
 
 import pandas as pd
 import pytest
 
-from unittest.mock import patch
 from src import train
 from src.predict import main as predict_main  # predict_main um Konflikte zu vermeiden
 
@@ -51,6 +51,8 @@ def test_prediction_sanity(setup_test_data):
     train.main(data_path=TEST_DATA_PATH, model_path=MODEL_PATH)
 
     # 2. Vorhersage mit der predict_main-Funktion ausführen
+    # Wir müssen sys.argv mocken, damit predict_main die --input und --output Argumente
+    # korrekt liest und nicht die Pytest-Argumente verwendet, die zum FileNotFoundError führen.
     temp_file_name = "temp_out.csv"
     with patch(
         "sys.argv",
@@ -62,31 +64,30 @@ def test_prediction_sanity(setup_test_data):
             temp_file_name,
         ],
     ):
+        # Wichtig: Wir übergeben die Argumente auch direkt, aber das Mocking ist
+        # für das CLI-Parsing notwendig.
         predict_main(
             model_path=MODEL_PATH, input_file=TEST_DATA_PATH, output_file=temp_file_name
         )
 
+    # 3. Vorhersageergebnisse laden
     results_df = pd.read_csv(temp_file_name)
     predictions_int = results_df["label"].tolist()
 
-    # 3. Die numerischen Vorhersagen in Text-Labels umwandeln (0 -> negative,
-    # 1 -> positive)
+    # 4. Die numerischen Vorhersagen in Text-Labels umwandeln
     predictions_str = [
         "positive" if pred == 1 else "negative" for pred in predictions_int
     ]
 
-    # 4. Die erwarteten Labels ebenfalls in Strings umwandeln, um einen korrekten
-    # Vergleich zu gewährleisten.
+    # 5. Die erwarteten Labels ebenfalls in Strings umwandeln
     expected_labels_str = [
         "positive" if label == 1 else "negative" for label in expected_labels_int
     ]
 
-    # 5. Überprüfung
+    # 6. Überprüfung
     assert len(predictions_str) == len(expected_labels_str)
-    # Das assert statement überprüft, ob die Vorhersagen mit den erwarteten
-    # Labels übereinstimmen
     assert predictions_str == expected_labels_str
 
-    # Cleanup der temporären Ausgabedatei
+    # 7. Cleanup der temporären Ausgabedatei
     if os.path.exists(temp_file_name):
         os.remove(temp_file_name)
