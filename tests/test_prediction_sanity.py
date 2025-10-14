@@ -1,5 +1,5 @@
 import os
-from unittest.mock import patch # <- Wichtig: Jetzt wieder benötigt, um F401 zu vermeiden und CLI zu mocken
+from unittest.mock import patch
 
 import pandas as pd
 import pytest

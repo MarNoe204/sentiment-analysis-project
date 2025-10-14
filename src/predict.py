@@ -5,9 +5,9 @@ import sys
 import joblib
 import pandas as pd
 
-# Pfad zum Modell relativ zum Container-Root (Wird nun durch Argumente überschrieben,
+# Pfad zum Modell relativ zum Container-Root (Wird nun durch Argumente überschrieben, 
 # aber als Fallback beibehalten)
-MODEL_PATH = "models/sentiment.joblib"
+MODEL_PATH = 'models/sentiment.joblib'
 
 
 def load_model(path: str):
@@ -41,8 +41,8 @@ def run_prediction(input_data: pd.DataFrame, model) -> pd.DataFrame:
     confidence = [max(p) for p in probabilities]
 
     # Füge die Ergebnisse zum DataFrame hinzu
-    input_data["label"] = predictions
-    input_data["confidence"] = confidence
+    input_data['label'] = predictions
+    input_data['confidence'] = confidence
 
     return input_data
 
@@ -56,14 +56,18 @@ def main(model_path: str, input_file: str, output_file: str):
     # und Datei-Eingabe (Args) ---
 
     # Fall 1: Benutzer hat Text über die Kommandozeile übergeben
-    # Wir prüfen sys.argv[1], da argparse die eigentlichen Argumente danach setzt.
-    if len(sys.argv) > 1 and sys.argv[1] not in ["--help", "-h"]:
+    # Wir prüfen sys.argv[1]. Ein direkter Text-Input darf nicht mit einem Flag (--) beginnen.
+    if (
+        len(sys.argv) > 1
+        and sys.argv[1] not in ["--help", "-h"]
+        and not sys.argv[1].startswith("--")  # <-- Korrigierte Prüfung
+    ):
         # Wenn der erste Parameter KEIN Argument-Flag ist, behandeln wir es
         # als direkten Text
         input_text = sys.argv[1]
 
         # Erstelle einen DataFrame aus dem einzelnen String
-        input_data = pd.DataFrame([input_text], columns=["text"])
+        input_data = pd.DataFrame([input_text], columns=['text'])
 
         print(f"[INFO] Analysiere Text: '{input_text[:50]}...'")
 
@@ -72,13 +76,15 @@ def main(model_path: str, input_file: str, output_file: str):
 
         # Gebe das Ergebnis auf der Konsole aus
         print("\n--- Analyse Ergebnis ---")
-        print(results_df[["text", "label", "confidence"]].iloc[0].to_markdown())
+        print(results_df[['text', 'label', 'confidence']].iloc[0].to_markdown())
         print("-----------------------\n")
 
     else:
         # Fall 2: Dateimodus (Args wurden übergeben, z.B. --input ...)
         if not os.path.exists(input_file):
-            print(f"[ERROR] Dateimodus ohne Eingabedatei: {input_file} nicht gefunden.")
+            print(
+                f"[ERROR] Dateimodus ohne Eingabedatei: {input_file} nicht gefunden."
+            )
             sys.exit(1)
 
         print(f"[INFO] Starte Vorhersage für {input_file}...")
