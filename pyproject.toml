@@ -5,10 +5,6 @@ line-length = 88
 # Wir ignorieren nur T201 (print statements), da print in dieser CLI-App für Logs verwendet wird.
 ignore = ["T201"]
 
-[tool.ruff.format]
-# Verwende dieselbe Zeilenlänge für den Formatter
-line-length = 88
-
 [tool.mypy]
 # mypy konfigurieren, um die Prüfung zu starten
 # Stellt sicher, dass das mypy-Kommando alle relevanten Python-Dateien abdeckt:
