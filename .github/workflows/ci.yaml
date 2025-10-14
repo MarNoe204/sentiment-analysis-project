@@ -40,10 +40,9 @@ jobs:
         ruff format . --check
 
     - name: Type Checking (Mypy)
-      run: |
-        # Die Ignorier-Logik für src/predict.py ist nun in pyproject.toml
-        # Dies behebt den "unrecognized arguments" Fehler und den "found twice" Fehler.
-        mypy --explicit-package-bases src/predict.py src/train.py tests/test_prediction_sanity.py
+        # --explicit-package-bases behebt den "found twice" Fehler und 
+        # stellt sicher, dass mypy src/ als Basis für src.predict erkennt.
+      run: mypy --explicit-package-bases src/train.py src/predict.py tests/test_prediction_sanity.py
         
     # ----------------------------------------------------
     # 2. Unit & Sanity Testing
