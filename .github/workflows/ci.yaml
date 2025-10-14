@@ -41,8 +41,9 @@ jobs:
 
     - name: Type Checking (Mypy)
       run: |
-        # Führt Mypy aus. Dank pyproject.toml werden sklearn/joblib ignoriert.
-        mypy src/train.py src/predict.py tests/test_prediction_sanity.py
+        # NEU: --explicit-package-bases behebt den "found twice" Fehler 
+        # und stellt sicher, dass Mypy src/ als Basis für src.predict erkennt.
+        mypy --explicit-package-bases src/train.py src/predict.py tests/test_prediction_sanity.py
         
     # ----------------------------------------------------
     # 2. Unit & Sanity Testing
