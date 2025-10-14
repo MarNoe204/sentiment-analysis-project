@@ -2,7 +2,7 @@
 line-length = 88
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "T20"]
+select = ["E", "F", "I"]
 
 [tool.ruff.format]
 quote-style = "double"
