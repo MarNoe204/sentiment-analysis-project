@@ -1,65 +1,85 @@
+import os
+from unittest.mock import patch
+
 import pandas as pd
 import pytest
-from src.predict import load_model, run_prediction
 
-# Wir definieren den Pfad zum trainierten Modell
-MODEL_PATH = "models/sentiment.joblib"
+from src import train
+from src.predict import main as predict_main  # predict_main um Konflikte zu vermeiden
+
+# Feste Konstanten
+TEST_DATA_PATH = "data/test_sentiments.csv"
+MODEL_PATH = "models/test_sentiment.joblib"
 
 
+# --- Fixtures ---
 @pytest.fixture(scope="session")
-def loaded_classifier():
+def setup_test_data():
+    """Erstellt temporäre Testdaten für Training und Sanity Check."""
+    test_data = pd.DataFrame(
+        {
+            "text": [
+                "I absolutely love this product and would buy it again.",
+                "This is the worst experience, I feel totally scammed.",
+                "It's okay, nothing special but it works.",
+                "Simply fantastic, five stars all the way!",
+                "Utterly disappointed with the quality and service.",
+            ],
+            # 1=positive, 0=negative (wie vom train.py erwartet)
+            "label": [1, 0, 0, 1, 0],
+        }
+    )
+    test_data.to_csv(TEST_DATA_PATH, index=False)
+    # Liefere die numerischen Labels zur Überprüfung
+    expected_labels = test_data["label"].tolist()
+    yield expected_labels
+    # Cleanup
+    os.remove(TEST_DATA_PATH)
+    if os.path.exists(MODEL_PATH):
+        os.remove(MODEL_PATH)
+
+
+# --- Sanity Test ---
+def test_prediction_sanity(setup_test_data):
     """
-    Lädt das trainierte Modell (die Pipeline) nur einmal pro pytest-Sitzung.
-    Dies reduziert den Overhead des wiederholten Ladens großer Joblib-Dateien
-    und beschleunigt die Tests drastisch.
+    Testet, ob das trainierte Modell auf dem winzigen Trainingsdatensatz (Overfit)
+    eine perfekte Vorhersage (Sanity Check) liefert.
     """
-    print(f"\n[INFO] Lade das Modell von {MODEL_PATH} (dies geschieht nur einmal)...")
-    return load_model(MODEL_PATH)
+    expected_labels_int = setup_test_data
 
+    # 1. Modell auf den Testdaten trainieren (erzeugt Overfitting)
+    train.main(data_path=TEST_DATA_PATH, model_path=MODEL_PATH)
 
-@pytest.fixture
-def sanity_data() -> pd.DataFrame:
-    """
-    Lädt eine kleine, eindeutige Untermenge von Daten für den Sanity Check.
-    """
-    df = pd.read_csv("data/sentiments.csv")
+    # 2. Vorhersage mit der predict_main-Funktion ausführen
+    with patch(
+        "sys.argv",
+        ["src/predict.py", "--input", TEST_DATA_PATH, "--output", "temp_out.csv"],
+    ):
+        predict_main(
+            model_path=MODEL_PATH, input_file=TEST_DATA_PATH, output_file="temp_out.csv"
+        )
 
-    # Wir verwenden die ersten 5 Zeilen, um Modell-Ungenauigkeiten zu umgehen
-    # und nur die Funktionsfähigkeit der Pipeline zu prüfen.
-    df = df.head(5)
-
-    # Die Spalte 'label' enthält 0 (negative) oder 1 (positive)
-    return df
-
-
-def test_prediction_sanity(sanity_data: pd.DataFrame, loaded_classifier) -> None:
-    """
-    Überprüft, ob der Klassifikator die erwarteten Labels für eine kleine,
-    eindeutige Stichprobe korrekt vorhersagt.
-    """
-    texts = sanity_data["text"]
-    # expected_labels_int enthält die erwarteten 0/1 Werte aus der CSV
-    expected_labels_int = sanity_data["label"].tolist()
-
-    # Erstelle einen temporären DataFrame nur mit der Textspalte für run_prediction
-    temp_df = pd.DataFrame({"text": texts})
-
-    # 2. Die Vorhersagen mit dem echten Modell ausführen
-    results_df = run_prediction(temp_df, loaded_classifier)
+    results_df = pd.read_csv("temp_out.csv")
     predictions_int = results_df["label"].tolist()
 
-    # 3. Die numerischen Vorhersagen in Text-Labels umwandeln (0 -> negative, 1 -> positive)
+    # 3. Die numerischen Vorhersagen in Text-Labels umwandeln (0 -> negative, 
+    # 1 -> positive)
     predictions_str = [
         "positive" if pred == 1 else "negative" for pred in predictions_int
     ]
 
-    # 4. Die erwarteten Labels ebenfalls in Strings umwandeln,
-    # um einen korrekten Vergleich zu gewährleisten.
+    # 4. Die erwarteten Labels ebenfalls in Strings umwandeln, um einen korrekten
+    # Vergleich zu gewährleisten.
     expected_labels_str = [
         "positive" if label == 1 else "negative" for label in expected_labels_int
     ]
 
+    # 5. Überprüfung
     assert len(predictions_str) == len(expected_labels_str)
-    # Das assert statement überprüft, ob die Vorhersagen mit den erwarteten Labels
-    # übereinstimmen
+    # Das assert statement überprüft, ob die Vorhersagen mit den erwarteten
+    # Labels übereinstimmen
     assert predictions_str == expected_labels_str
+
+    # Cleanup der temporären Ausgabedatei
+    if os.path.exists("temp_out.csv"):
+        os.remove("temp_out.csv")

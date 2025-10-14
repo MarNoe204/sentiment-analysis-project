@@ -1,11 +1,13 @@
-import joblib
+import argparse
 import os
 import sys
 
+import joblib
 import pandas as pd
 
-# Pfad zum Modell relativ zum Container-Root
-MODEL_PATH = "models/sentiment.joblib"
+# Pfad zum Modell relativ zum Container-Root (Wird nun durch Argumente überschrieben, 
+# aber als Fallback beibehalten)
+MODEL_PATH = 'models/sentiment.joblib'
 
 
 def load_model(path: str):
@@ -39,24 +41,29 @@ def run_prediction(input_data: pd.DataFrame, model) -> pd.DataFrame:
     confidence = [max(p) for p in probabilities]
 
     # Füge die Ergebnisse zum DataFrame hinzu
-    input_data["label"] = predictions
-    input_data["confidence"] = confidence
+    input_data['label'] = predictions
+    input_data['confidence'] = confidence
 
     return input_data
 
 
-def main():
+def main(model_path: str, input_file: str, output_file: str):
     """Hauptfunktion zur Verarbeitung von Eingaben und zur Ausgabe von Vorhersagen."""
 
-    model = load_model(MODEL_PATH)
+    model = load_model(model_path)
 
-    # --- Neue Logik zur Unterscheidung von Datei- und Text-Eingabe ---
-    if len(sys.argv) > 1:
-        # Fall 1: Benutzer hat Text über die Kommandozeile übergeben (ENTRYPOINT-Nutzung)
+    # --- Neue Logik zur Unterscheidung von Text-Eingabe (sys.argv)
+    # und Datei-Eingabe (Args) ---
+
+    # Fall 1: Benutzer hat Text über die Kommandozeile übergeben
+    # Wir prüfen sys.argv[1], da argparse die eigentlichen Argumente danach setzt.
+    if len(sys.argv) > 1 and sys.argv[1] not in ["--help", "-h"]:
+        # Wenn der erste Parameter KEIN Argument-Flag ist, behandeln wir es
+        # als direkten Text
         input_text = sys.argv[1]
 
         # Erstelle einen DataFrame aus dem einzelnen String
-        input_data = pd.DataFrame([input_text], columns=["text"])
+        input_data = pd.DataFrame([input_text], columns=['text'])
 
         print(f"[INFO] Analysiere Text: '{input_text[:50]}...'")
 
@@ -65,17 +72,15 @@ def main():
 
         # Gebe das Ergebnis auf der Konsole aus
         print("\n--- Analyse Ergebnis ---")
-        print(results_df[["text", "label", "confidence"]].iloc[0].to_markdown())
+        print(results_df[['text', 'label', 'confidence']].iloc[0].to_markdown())
         print("-----------------------\n")
 
     else:
-        # Fall 2: Keine Argumente übergeben, führe Dateiverarbeitung aus
-        # (Standardverhalten)
-        input_file = "data/sentiments.csv"
-        output_file = "data/sentiments_out.csv"
-
+        # Fall 2: Dateimodus (Args wurden übergeben, z.B. --input ...)
         if not os.path.exists(input_file):
-            print(f"[ERROR] Dateimodus ohne Eingabedatei: {input_file} nicht gefunden.")
+            print(
+                f"[ERROR] Dateimodus ohne Eingabedatei: {input_file} nicht gefunden."
+            )
             sys.exit(1)
 
         print(f"[INFO] Starte Vorhersage für {input_file}...")
@@ -88,4 +93,17 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    # Wenn der ENTRYPOINT nur den Text übergibt (z.B. docker run app "Text"),
+    # wird dieser in main() durch sys.argv[1] abgefangen. Die folgenden
+    # Argumente sind für den Batch-Datei-Modus.
+    parser.add_argument("--model", default=MODEL_PATH)
+    parser.add_argument("--input", default="data/sentiments.csv")
+    parser.add_argument("--output", default="data/sentiments_out.csv")
+
+    args: argparse.Namespace = parser.parse_args()
+    main(
+        model_path=args.model,
+        input_file=args.input,
+        output_file=args.output,
+    )
