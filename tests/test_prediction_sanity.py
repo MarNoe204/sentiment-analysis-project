@@ -10,6 +10,7 @@ from src.predict import main as predict_main  # predict_main um Konflikte zu ver
 # Feste Konstanten
 TEST_DATA_PATH = "data/test_sentiments.csv"
 MODEL_PATH = "models/test_sentiment.joblib"
+TEMP_OUTPUT_PATH = "temp_test_output.csv"
 
 
 # --- Fixtures ---
@@ -53,10 +54,10 @@ def test_prediction_sanity(setup_test_data):
     # 2. Vorhersage mit der predict_main-Funktion ausführen
     with patch(
         "sys.argv",
-        ["src/predict.py", "--input", TEST_DATA_PATH, "--output", "temp_out.csv"],
+        ["src/predict.py", "--input", TEST_DATA_PATH, "--output", TEMP_OUTPUT_PATH],
     ):
         predict_main(
-            model_path=MODEL_PATH, input_file=TEST_DATA_PATH, output_file="temp_out.csv"
+            model_path=MODEL_PATH, input_file=TEST_DATA_PATH, output_file=TEMP_OUTPUT_PATH
         )
 
     results_df = pd.read_csv("temp_out.csv")
@@ -81,5 +82,5 @@ def test_prediction_sanity(setup_test_data):
     assert predictions_str == expected_labels_str
 
     # Cleanup der temporären Ausgabedatei
-    if os.path.exists("temp_out.csv"):
-        os.remove("temp_out.csv")
+    if os.path.exists(TEMP_OUTPUT_PATH):
+        os.remove(TEMP_OUTPUT_PATH)
