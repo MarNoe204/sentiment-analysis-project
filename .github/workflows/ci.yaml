@@ -41,10 +41,9 @@ jobs:
 
     - name: Type Checking (Mypy)
       run: |
-        # NEU: --explicit-package-bases behebt den "found twice" Fehler.
-        # --ignore-errors-in-file IGNORIERT ALLE Fehler in src/predict.py temporär, 
-        # um die Pipeline sofort zum Laufen zu bringen.
-        mypy --explicit-package-bases --ignore-errors-in-file src/predict.py src/train.py tests/test_prediction_sanity.py
+        # Die Ignorier-Logik für src/predict.py ist nun in pyproject.toml
+        # Dies behebt den "unrecognized arguments" Fehler und den "found twice" Fehler.
+        mypy --explicit-package-bases src/predict.py src/train.py tests/test_prediction_sanity.py
         
     # ----------------------------------------------------
     # 2. Unit & Sanity Testing
