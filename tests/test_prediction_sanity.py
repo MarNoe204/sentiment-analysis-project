@@ -3,6 +3,7 @@ import os
 import pandas as pd
 import pytest
 
+from unittest.mock import patch
 from src import train
 from src.predict import main as predict_main  # predict_main um Konflikte zu vermeiden
 
@@ -50,11 +51,20 @@ def test_prediction_sanity(setup_test_data):
     train.main(data_path=TEST_DATA_PATH, model_path=MODEL_PATH)
 
     # 2. Vorhersage mit der predict_main-Funktion ausführen
-    # Wir verwenden temp_out.csv als direkten Dateinamen für Konsistenz
     temp_file_name = "temp_out.csv"
-    predict_main(
-        model_path=MODEL_PATH, input_file=TEST_DATA_PATH, output_file=temp_file_name
-    )
+    with patch(
+        "sys.argv",
+        [
+            "src/predict.py",
+            "--input",
+            TEST_DATA_PATH,
+            "--output",
+            temp_file_name,
+        ],
+    ):
+        predict_main(
+            model_path=MODEL_PATH, input_file=TEST_DATA_PATH, output_file=temp_file_name
+        )
 
     results_df = pd.read_csv(temp_file_name)
     predictions_int = results_df["label"].tolist()
