@@ -52,15 +52,10 @@ def test_prediction_sanity(setup_test_data):
     train.main(data_path=TEST_DATA_PATH, model_path=MODEL_PATH)
 
     # 2. Vorhersage mit der predict_main-Funktion ausführen
-    with patch(
-        "sys.argv",
-        ["src/predict.py", "--input", TEST_DATA_PATH, "--output", TEMP_OUTPUT_PATH],
-    ):
-        predict_main(
-            model_path=MODEL_PATH,
-            input_file=TEST_DATA_PATH,
-            output_file=TEMP_OUTPUT_PATH,
-        )
+    # Wir übergeben die Pfade direkt an die Funktion, um das Mocking zu vermeiden.
+    predict_main(
+        model_path=MODEL_PATH, input_file=TEST_DATA_PATH, output_file="temp_out.csv"
+    )
 
     results_df = pd.read_csv("temp_out.csv")
     predictions_int = results_df["label"].tolist()
