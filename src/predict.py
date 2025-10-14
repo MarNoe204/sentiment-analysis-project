@@ -14,8 +14,10 @@ def load_model(path: str):
         print(f"[INFO] Modell erfolgreich geladen von: {path}")
         return model
     except FileNotFoundError:
-        print(f"[ERROR] Modelldatei nicht gefunden unter: {path}. "
-              "Bitte trainieren Sie das Modell zuerst.")
+        print(
+            f"[ERROR] Modelldatei nicht gefunden unter: {path}. "
+            "Bitte trainieren Sie das Modell zuerst."
+        )
         sys.exit(1)
     except Exception as e:
         print(f"[ERROR] Fehler beim Laden des Modells: {e}")
@@ -64,12 +66,16 @@ def main():
         print("-----------------------\n")
         
     else:
-        # Fall 2: Keine Argumente übergeben, führe Dateiverarbeitung aus (Standardverhalten)
+        # Fall 2: Keine Argumente übergeben, führe Dateiverarbeitung aus
+        # (Standardverhalten)
         input_file = 'data/sentiments.csv'
         output_file = 'data/sentiments_out.csv'
         
         if not os.path.exists(input_file):
-            print(f"[ERROR] Dateimodus ohne Eingabedatei: {input_file} nicht gefunden.")
+            print(
+                f"[ERROR] Dateimodus ohne Eingabedatei: {input_file} "
+                "nicht gefunden."
+            )
             sys.exit(1)
 
         print(f"[INFO] Starte Vorhersage für {input_file}...")

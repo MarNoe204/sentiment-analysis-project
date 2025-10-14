@@ -51,11 +51,13 @@ def test_prediction_sanity(sanity_data: pd.DataFrame, loaded_classifier) -> None
         "positive" if pred == 1 else "negative" for pred in predictions_int
     ]
 
-    # 4. Die erwarteten Labels ebenfalls in Strings umwandeln, um einen korrekten Vergleich zu gewährleisten.
+    # 4. Die erwarteten Labels ebenfalls in Strings umwandeln, 
+    # um einen korrekten Vergleich zu gewährleisten.
     expected_labels_str = [
         "positive" if label == 1 else "negative" for label in expected_labels_int
     ]
 
     assert len(predictions_str) == len(expected_labels_str)
-    # Das assert statement überprüft, ob die Vorhersagen mit den erwarteten Labels übereinstimmen
+    # Das assert statement überprüft, ob die Vorhersagen mit den erwarteten Labels 
+    # übereinstimmen
     assert predictions_str == expected_labels_str

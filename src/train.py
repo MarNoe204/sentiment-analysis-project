@@ -1,5 +1,6 @@
 import argparse
 import os
+from typing import Tuple
 
 import pandas as pd
 from joblib import dump
@@ -11,14 +12,16 @@ from sklearn.pipeline import Pipeline, make_pipeline
 
 def load_and_validate_data(data_path: str) -> DataFrame:
     """
-    Lädt Daten aus einer CSV, stellt sicher, dass die erforderlichen Spalten vorhanden sind,
-    und konvertiert die Labels explizit in numerische Werte (0 und 1).
+    Lädt Daten aus einer CSV, stellt sicher, dass die erforderlichen Spalten
+    vorhanden sind, und konvertiert die Labels explizit in numerische Werte
+    (0 und 1).
     """
     df = pd.read_csv(data_path)
     if not {"text", "label"}.issubset(df.columns):
         raise ValueError("CSV muss die Spalten 'text' und 'label' enthalten.")
 
-    # Explizite Label-Konvertierung: 'positive' -> 1, 'negative' -> 0 (Wichtig für Stabilität)
+    # Explizite Label-Konvertierung: 'positive' -> 1, 'negative' -> 0 
+    # (Wichtig für Stabilität)
     label_map = {"positive": 1, "negative": 0}
     df["label"] = df["label"].replace(label_map)
 
@@ -28,7 +31,8 @@ def load_and_validate_data(data_path: str) -> DataFrame:
 def train_model(X: Series, y: Series) -> Pipeline:
     """
     Baut und trainiert eine Klassifizierungspipeline mit extremen Parametern
-    (C=100.0, max_iter=5000), um den winzigen Datensatz maximal zu überanpassen (Overfit).
+    (C=100.0, max_iter=5000), um den winzigen Datensatz maximal zu überanpassen 
+    (Overfit).
     """
     clf_pipeline = make_pipeline(
         TfidfVectorizer(min_df=1, ngram_range=(1, 3)),
@@ -60,11 +64,13 @@ def save_model(model: Pipeline, model_path: str) -> None:
 
 def main(data_path: str, model_path: str) -> None:
     """
-    Haupt-Workflow: Lädt, trainiert auf allen Daten, bewertet (intern) und speichert das Modell.
+    Haupt-Workflow: Lädt, trainiert auf allen Daten, bewertet (intern) und
+    speichert das Modell.
     """
     df = load_and_validate_data(data_path)
 
-    # Wir trainieren immer auf dem gesamten Datensatz, um die Konfidenz für den Sanity Check zu maximieren.
+    # Wir trainieren immer auf dem gesamten Datensatz, um die Konfidenz
+    # für den Sanity Check zu maximieren.
     X: Series = df["text"]
     y: Series = df["label"]
 
