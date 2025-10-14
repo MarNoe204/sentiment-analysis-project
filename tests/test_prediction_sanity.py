@@ -9,7 +9,6 @@ from src.predict import main as predict_main  # predict_main um Konflikte zu ver
 # Feste Konstanten
 TEST_DATA_PATH = "data/test_sentiments.csv"
 MODEL_PATH = "models/test_sentiment.joblib"
-TEMP_OUTPUT_PATH = "temp_test_output.csv"
 
 
 # --- Fixtures ---
@@ -51,12 +50,13 @@ def test_prediction_sanity(setup_test_data):
     train.main(data_path=TEST_DATA_PATH, model_path=MODEL_PATH)
 
     # 2. Vorhersage mit der predict_main-Funktion ausführen
-    # Wir übergeben die Pfade direkt an die Funktion, um das Mocking zu vermeiden.
+    # Wir verwenden temp_out.csv als direkten Dateinamen für Konsistenz
+    temp_file_name = "temp_out.csv"
     predict_main(
-        model_path=MODEL_PATH, input_file=TEST_DATA_PATH, output_file="temp_out.csv"
+        model_path=MODEL_PATH, input_file=TEST_DATA_PATH, output_file=temp_file_name
     )
 
-    results_df = pd.read_csv("temp_out.csv")
+    results_df = pd.read_csv(temp_file_name)
     predictions_int = results_df["label"].tolist()
 
     # 3. Die numerischen Vorhersagen in Text-Labels umwandeln (0 -> negative,
@@ -78,5 +78,5 @@ def test_prediction_sanity(setup_test_data):
     assert predictions_str == expected_labels_str
 
     # Cleanup der temporären Ausgabedatei
-    if os.path.exists(TEMP_OUTPUT_PATH):
-        os.remove(TEMP_OUTPUT_PATH)
+    if os.path.exists(temp_file_name):
+        os.remove(temp_file_name)
