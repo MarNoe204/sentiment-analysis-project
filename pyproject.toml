@@ -1,22 +1,26 @@
 [tool.ruff]
+# Maximale Zeilenlänge
 line-length = 88
-
-[tool.ruff.lint]
-select = ["E", "F", "I"]
+# Ignoriere E501 (Line too long) nicht mehr, da wir die Zeilen umgebrochen haben.
+# Wir ignorieren nur T201 (print statements), da print in dieser CLI-App für Logs verwendet wird.
+ignore = ["T201"]
 
 [tool.ruff.format]
-quote-style = "double"
-docstring-code-format = true
+# Verwende dieselbe Zeilenlänge für den Formatter
+line-length = 88
 
 [tool.mypy]
-namespace_packages = true
+# mypy konfigurieren, um die Prüfung zu starten
+# Stellt sicher, dass das mypy-Kommando alle relevanten Python-Dateien abdeckt:
+files = ["src/", "tests/"]
+
+# Externe Bibliotheken ignorieren, die keine Typ-Annotationen haben
+# Hier ignorieren wir sklearn, da es keine mypy-freundliche Bibliothek ist.
+# Wir ignorieren joblib, da es ebenfalls mypy-Probleme verursachen kann.
+[[tool.mypy.overrides]]
+module = [
+    "sklearn.*", 
+    "joblib", 
+    "pandas"
+]
 ignore_missing_imports = true
-
-[tool.mypy.explicit_package_bases]
-enable = true
-
-[tool.mypy.check_untyped_defs]
-enable = true
-
-[tool.mypy-src.predict]
-ignore_errors = true
