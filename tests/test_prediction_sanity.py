@@ -57,7 +57,9 @@ def test_prediction_sanity(setup_test_data):
         ["src/predict.py", "--input", TEST_DATA_PATH, "--output", TEMP_OUTPUT_PATH],
     ):
         predict_main(
-            model_path=MODEL_PATH, input_file=TEST_DATA_PATH, output_file=TEMP_OUTPUT_PATH
+            model_path=MODEL_PATH,
+            input_file=TEST_DATA_PATH,
+            output_file=TEMP_OUTPUT_PATH,
         )
 
     results_df = pd.read_csv("temp_out.csv")
