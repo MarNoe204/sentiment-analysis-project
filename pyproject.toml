@@ -11,14 +11,12 @@ docstring-code-format = true
 [tool.mypy]
 namespace_packages = true
 ignore_missing_imports = true
-Ignoriert Mypy-Fehler in den externen Bibliotheken und der predict.py
 
 [tool.mypy.explicit_package_bases]
-Diese Sektion wird benötigt, damit Mypy die Dateien src/ als packages erkennt.
+enable = true
 
 [tool.mypy.check_untyped_defs]
 enable = true
-NEU: Ignoriert die predict.py, die momentan fehlerhafte Typen hat.
 
 [tool.mypy-src.predict]
 ignore_errors = true
