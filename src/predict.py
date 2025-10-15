@@ -5,9 +5,9 @@ import sys
 import joblib
 import pandas as pd
 
-# Pfad zum Modell relativ zum Container-Root (Wird nun durch Argumente überschrieben,
+# Pfad zum Modell relativ zum Container-Root (Wird nun durch Argumente überschrieben, 
 # aber als Fallback beibehalten)
-MODEL_PATH = "models/sentiment.joblib"
+MODEL_PATH = 'models/sentiment.joblib'
 
 
 def load_model(path: str):
@@ -41,67 +41,82 @@ def run_prediction(input_data: pd.DataFrame, model) -> pd.DataFrame:
     confidence = [max(p) for p in probabilities]
 
     # Füge die Ergebnisse zum DataFrame hinzu
-    input_data["label"] = predictions
-    input_data["confidence"] = confidence
+    input_data['label'] = predictions
+    input_data['confidence'] = confidence
 
     return input_data
 
 
+def run_cli_text_mode(input_text: str, model_path: str = MODEL_PATH):
+    """
+    Führt die Vorhersage für einen direkt über die Kommandozeile übergebenen Text aus.
+    Dieser Modus umgeht argparse.
+    """
+    model = load_model(model_path)
+    
+    # Erstelle einen DataFrame aus dem einzelnen String
+    input_data = pd.DataFrame([input_text], columns=['text'])
+
+    print(f"[INFO] Analysiere Text: '{input_text[:50]}...'")
+
+    # Führe die Vorhersage aus
+    results_df = run_prediction(input_data, model)
+
+    # Gebe das Ergebnis auf der Konsole aus (wichtig für den Docker Sanity Check!)
+    print("\n--- Analyse Ergebnis ---")
+    # Der Output für den Docker Check muss auf der Konsole sein, ohne to_csv
+    # Wir geben die relevanten Daten direkt aus, um den grep-Befehl im CI zu vereinfachen.
+    # Format: label, confidence
+    result_series = results_df[['label', 'confidence']].iloc[0]
+    label_text = 'positive' if result_series['label'] == 1 else 'negative'
+    
+    # Wichtig: Drucke die Daten, die der grep-Befehl in der CI erwartet (label und confidence)
+    # Beispiel-Output: "Sentiment: positive | Confidence: 0.9876"
+    print(f"Sentiment: {label_text} | Confidence: {result_series['confidence']:.4f}")
+    
+    # Gib den Markdown-Output für eine schöne Anzeige aus (für den Menschen)
+    print("\n" + results_df[['text', 'label', 'confidence']].iloc[0].to_markdown())
+    print("-----------------------\n")
+
+
 def main(model_path: str, input_file: str, output_file: str):
-    """Hauptfunktion zur Verarbeitung von Eingaben und zur Ausgabe von Vorhersagen."""
+    """Hauptfunktion für den Batch-Modus (Datei-zu-Datei-Verarbeitung)."""
 
     model = load_model(model_path)
 
-    # --- Neue Logik zur Unterscheidung von Text-Eingabe (sys.argv)
-    # und Datei-Eingabe (Args) ---
+    if not os.path.exists(input_file):
+        print(f"[ERROR] Eingabedatei nicht gefunden: {input_file}")
+        sys.exit(1)
 
-    # Fall 1: Benutzer hat Text über die Kommandozeile übergeben
-    # Wir prüfen sys.argv[1]. Ein direkter Text-Input darf nicht mit einem Flag (--) beginnen.
-    if (
-        len(sys.argv) > 1
-        and sys.argv[1] not in ["--help", "-h"]
-        and not sys.argv[1].startswith("--")  # <-- Korrigierte Prüfung
-    ):
-        # Wenn der erste Parameter KEIN Argument-Flag ist, behandeln wir es
-        # als direkten Text
-        input_text = sys.argv[1]
+    print(f"[INFO] Starte Vorhersage für Batch-Datei: {input_file}...")
+    input_data = pd.read_csv(input_file)
 
-        # Erstelle einen DataFrame aus dem einzelnen String
-        input_data = pd.DataFrame([input_text], columns=["text"])
+    results_df = run_prediction(input_data, model)
 
-        print(f"[INFO] Analysiere Text: '{input_text[:50]}...'")
-
-        # Führe die Vorhersage aus
-        results_df = run_prediction(input_data, model)
-
-        # Gebe das Ergebnis auf der Konsole aus
-        print("\n--- Analyse Ergebnis ---")
-        print(results_df[["text", "label", "confidence"]].iloc[0].to_markdown())
-        print("-----------------------\n")
-
-    else:
-        # Fall 2: Dateimodus (Args wurden übergeben, z.B. --input ...)
-        if not os.path.exists(input_file):
-            print(f"[ERROR] Dateimodus ohne Eingabedatei: {input_file} nicht gefunden.")
-            sys.exit(1)
-
-        print(f"[INFO] Starte Vorhersage für {input_file}...")
-        input_data = pd.read_csv(input_file)
-
-        results_df = run_prediction(input_data, model)
-
-        results_df.to_csv(output_file, index=False)
-        print(f"[INFO] Vorhersagen erfolgreich gespeichert unter: {output_file}")
+    results_df.to_csv(output_file, index=False)
+    print(f"[INFO] Vorhersagen erfolgreich gespeichert unter: {output_file}")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    # Wenn der ENTRYPOINT nur den Text übergibt (z.B. docker run app "Text"),
-    # wird dieser in main() durch sys.argv[1] abgefangen. Die folgenden
-    # Argumente sind für den Batch-Datei-Modus.
-    parser.add_argument("--model", default=MODEL_PATH)
-    parser.add_argument("--input", default="data/sentiments.csv")
-    parser.add_argument("--output", default="data/sentiments_out.csv")
+    # --- Modus-Erkennung (bevor argparse läuft!) ---
+    
+    # Prüft, ob ein Argument übergeben wurde, das NICHT mit einem Flag beginnt.
+    # Das ist der Fall bei: docker run app "some text"
+    if len(sys.argv) > 1 and not sys.argv[1].startswith(("-", "--")):
+        # Ausführung im Text-Modus und sofortiger Exit
+        run_cli_text_mode(sys.argv[1])
+        sys.exit(0) # Erfolgreicher Exit nach Text-Modus-Ausführung
+        
+    # --- Batch-Modus (File-to-File) ---
+    # Fällt zurück auf argparse, wenn keine Text-Eingabe gefunden wurde (oder --help übergeben wurde)
+    
+    parser = argparse.ArgumentParser(
+        description="Führt eine Sentiment-Analyse in Batch- oder Text-Modus durch."
+    )
+    
+    parser.add_argument("--model", default=MODEL_PATH, help="Pfad zur gespeicherten Modell-Datei.")
+    parser.add_argument("--input", default="data/sentiments.csv", help="Pfad zur Eingabe-CSV-Datei.")
+    parser.add_argument("--output", default="data/sentiments_out.csv", help="Pfad zur Ausgabe-CSV-Datei.")
 
     args: argparse.Namespace = parser.parse_args()
     main(
