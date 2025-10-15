@@ -62,16 +62,16 @@ def run_cli_text_mode(input_text: str, model_path: str = MODEL_PATH):
     # Führe die Vorhersage aus
     results_df = run_prediction(input_data, model)
 
-    # Gebe das Ergebnis auf der Konsole aus (wichtig für den Docker Sanity Check!)
-    print("\n--- Analyse Ergebnis ---")
-    # Der Output für den Docker Check muss auf der Konsole sein, ohne to_csv
-    # Wir geben die relevanten Daten direkt aus, um den grep-Befehl im CI zu vereinfachen.
-    # Format: label, confidence
+    # Gebe das Ergebnis auf der Konsole aus
     result_series = results_df[["label", "confidence"]].iloc[0]
     label_text = "positive" if result_series["label"] == 1 else "negative"
 
-    # Wichtig: Drucke die Daten, die der grep-Befehl in der CI erwartet (label und confidence)
-    # Beispiel-Output: "Sentiment: positive | Confidence: 0.9876"
+    # --- WICHTIGE ÄNDERUNG: Ausgabe der sauberen Zeile für den CI-Check
+    # Wir stellen sicher, dass die Ausgabe das exakte Muster "positive 0.XXX" enthält.
+    print(f"{label_text} {result_series['confidence']:.4f}")
+
+    # --- Mensch-lesbarer Output (für Debugging und Übersicht) ---
+    print("\n--- Analyse Ergebnis ---")
     print(f"Sentiment: {label_text} | Confidence: {result_series['confidence']:.4f}")
 
     # Gib den Markdown-Output für eine schöne Anzeige aus (für den Menschen)
@@ -101,15 +101,12 @@ if __name__ == "__main__":
     # --- Modus-Erkennung (bevor argparse läuft!) ---
 
     # Prüft, ob ein Argument übergeben wurde, das NICHT mit einem Flag beginnt.
-    # Das ist der Fall bei: docker run app "some text"
     if len(sys.argv) > 1 and not sys.argv[1].startswith(("-", "--")):
         # Ausführung im Text-Modus und sofortiger Exit
         run_cli_text_mode(sys.argv[1])
-        sys.exit(0)  # Erfolgreicher Exit nach Text-Modus-Ausführung
+        sys.exit(0)
 
     # --- Batch-Modus (File-to-File) ---
-    # Fällt zurück auf argparse, wenn keine Text-Eingabe gefunden wurde (oder --help übergeben wurde)
-
     parser = argparse.ArgumentParser(
         description="Führt eine Sentiment-Analyse in Batch- oder Text-Modus durch."
     )
