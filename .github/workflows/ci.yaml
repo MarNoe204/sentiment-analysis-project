@@ -61,7 +61,7 @@ jobs:
     - name: Build Docker image (with cache bypass)
       run: |
         docker build -t sentiment-analysis-app --no-cache .
-        
+
     - name: Docker Container Sanity Check
       run: |
         # Führt den Container aus, um die Vorhersagefunktionalität zu prüfen
@@ -73,3 +73,18 @@ jobs:
         else
             echo "Docker Sanity Check erfolgreich: $RESULT"
         fi
+
+    - name: Login and Push Docker image
+      env:
+        DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }} # Oder DOCKERHUB_PASSWORD
+      run: |
+        # 1. Login
+        echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+    
+        # 2. Taggen (falls noch nicht im Build-Schritt passiert)
+        IMAGE_NAME=sentiment-analysis-app
+        DOCKER_REPO=<DOCKERHUB_USERNAME>/${IMAGE_NAME}
+
+        # 3. Push des neuesten Images
+        docker push ${DOCKER_REPO}:latest
