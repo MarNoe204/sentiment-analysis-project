@@ -2,6 +2,8 @@
 # Maximale Zeilenlänge
 line-length = 88
 # Ignoriere E501 (Line too long) nicht mehr, da wir die Zeilen umgebrochen haben.
+
+[tool.ruff.lint]
 # Wir ignorieren nur T201 (print statements), da print in dieser CLI-App für Logs verwendet wird.
 ignore = ["T201"]
 
