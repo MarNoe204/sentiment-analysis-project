@@ -84,7 +84,7 @@ jobs:
     
         # 2. Taggen (falls noch nicht im Build-Schritt passiert)
         IMAGE_NAME=sentiment-analysis-app
-        DOCKER_REPO=<DOCKERHUB_USERNAME>/${IMAGE_NAME}
+        DOCKER_REPO=marnoe204/${IMAGE_NAME}
 
         # 3. Push des neuesten Images
         docker push ${DOCKER_REPO}:latest
