@@ -77,14 +77,17 @@ jobs:
     - name: Login and Push Docker image
       env:
         DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-        DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }} # Oder DOCKERHUB_PASSWORD
+        DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
       run: |
+        IMAGE_NAME=sentiment-analysis-app
+        # Stellen Sie sicher, dass Sie HIER IHREN DockerHub-Benutzernamen verwenden!
+        DOCKER_REPO=marnoe204/${IMAGE_NAME} 
+
         # 1. Login
         echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
-    
-        # 2. Taggen (falls noch nicht im Build-Schritt passiert)
-        IMAGE_NAME=sentiment-analysis-app
-        DOCKER_REPO=marnoe204/${IMAGE_NAME}
+        
+        # 2. KRITISCHER FIX: Tagge das lokal existierende Image mit dem vollen Repository-Pfad
+        docker tag ${IMAGE_NAME} ${DOCKER_REPO}:latest
 
         # 3. Push des neuesten Images
         docker push ${DOCKER_REPO}:latest
